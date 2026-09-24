@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PARADOX — Gaming Ecosystem | Build. Play. Connect.</title>
+  <meta name="description" content="PARADOX is a dark, luxury gaming ecosystem powering Telegram sensation games Football Collect and World War MMO with 24/7 dedicated live support." />
+  <meta property="og:title" content="PARADOX — Gaming Ecosystem | Build. Play. Connect." />
+  <meta property="og:description" content="Discover Football Collect and World War MMO on Telegram, access real-time player support, and join the official Paradox gaming community." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Google Fonts: Sora (Headings) & Manrope (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN for pure static hosting without build step -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paradoxBg: '#050506',
+            paradoxCard: '#111113',
+            paradoxCardAlt: '#151517',
+            paradoxGold: '#d9a13a',
+            paradoxGoldLight: '#f3c469',
+            paradoxText: '#f2f0ea',
+            paradoxMuted: '#8a8884'
+          },
+          fontFamily: {
+            heading: ['Sora', 'sans-serif'],
+            body: ['Manrope', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Firebase JS SDK (Compat version for pure static hosting without build step) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+  <!-- Embedded Stylesheet following PARADOX Design System -->
+  <style>
+    :root {
+      --bg-dark: #050506;
+      --bg-card: #111113;
+      --bg-card-alt: #151517;
+      --bg-card-hover: #19191d;
+      --border-subtle: #222226;
+      --border-gold: rgba(217, 161, 58, 0.28);
+      --gold: #d9a13a;
+      --gold-light: #f3c469;
+      --gold-glow: rgba(217, 161, 58, 0.18);
+      --text-main: #f2f0ea;
+      --text-muted: #8a8884;
+      --font-heading: 'Sora', sans-serif;
+      --font-body: 'Manrope', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    h1, h2, h3, h4, h5, h6, .font-heading {
+      font-family: var(--font-heading);
+      letter-spacing: -0.02em;
+    }
+
+    /* Accessibility focus rings */
+    :focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    /* Subtle background grid texture */
+    .bg-grid-pattern {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #ffffff 20%, var(--gold-light) 65%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Buttons */
+    .btn-gold {
+      background-color: var(--gold);
+      color: #050506;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.875rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: 1px solid var(--gold);
+      cursor: pointer;
+    }
+    .btn-gold:hover {
+      background-color: var(--gold-light);
+      border-color: var(--gold-light);
+      box-shadow: 0 0 20px rgba(217, 161, 58, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.75rem 1.4rem;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-secondary:hover {
+      border-color: var(--border-gold);
+      color: var(--gold-light);
+      background-color: var(--bg-card-alt);
+    }
+
+    /* Cards */
+    .paradox-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .paradox-card:hover {
+      border-color: var(--border-gold);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Chat messenger custom scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0d0d0f;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #27272c;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: var(--gold);
+    }
+
+    /* Chat bubble animations */
+    @keyframes bubbleIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .chat-bubble-animate {
+      animation: bubbleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Floating support button */
+    .floating-support-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+      color: #050506;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.875rem;
+      padding: 0.85rem 1.35rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(217, 161, 58, 0.35), 0 2px 6px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+    .floating-support-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(217, 161, 58, 0.5);
+      filter: brightness(1.05);
+    }
+
+    /* Accordion FAQ */
+    .faq-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .faq-item[aria-expanded="true"] .faq-content {
+      max-height: 280px;
+    }
+    .faq-item[aria-expanded="true"] .faq-chevron {
+      transform: rotate(180deg);
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body class="bg-grid-pattern">
+
+  <!-- =======================================================================
+       STICKY HEADER
+       Logo "PARADOX", Nav: Home/Products/Support/Community/About, "Open Messenger" CTA
+       ======================================================================= -->
+  <header class="sticky top-0 z-50 w-full border-b border-[#222226] bg-[#050506]/90 backdrop-blur-md transition-colors" id="mainHeader">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <a href="#home" class="flex items-center gap-2.5 text-decoration-none group">
+        <div class="w-9 h-9 rounded-lg bg-[#111113] border border-[#2d2d33] flex items-center justify-center text-gold group-hover:border-[#d9a13a] transition-colors shadow-inner">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="text-[#d9a13a]">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-heading font-extrabold text-xl tracking-wider text-[#f2f0ea] group-hover:text-white transition-colors">
+            PARADOX<span class="text-[#d9a13a]">.</span>
+          </span>
+          <span class="text-[10px] uppercase tracking-widest text-[#8a8884] font-medium -mt-1">Gaming Ecosystem</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-[#8a8884]" aria-label="Main Navigation">
+        <a href="#home" class="hover:text-[#f2f0ea] transition-colors py-1">Home</a>
+        <a href="#products" class="hover:text-[#f2f0ea] transition-colors py-1">Products</a>
+        <a href="#support" class="hover:text-[#f2f0ea] transition-colors py-1">Support</a>
+        <a href="#community" class="hover:text-[#f2f0ea] transition-colors py-1">Community</a>
+        <a href="#about" class="hover:text-[#f2f0ea] transition-colors py-1">About</a>
+        <a href="admin.html" class="hover:text-[#d9a13a] transition-colors py-1 text-xs uppercase tracking-wider text-[#8a8884]/80 flex items-center gap-1" title="Go to Admin Panel">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Admin
+        </a>
+      </nav>
+
+      <!-- Right Action CTA -->
+      <div class="flex items-center gap-3">
+        <a href="#support" class="btn-gold text-xs sm:text-sm py-2.5 px-4 sm:px-5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Open Messenger</span>
+        </a>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button id="mobileMenuBtn" aria-label="Toggle Navigation Menu" aria-expanded="false" class="md:hidden p-2 rounded-lg bg-[#111113] border border-[#222226] text-[#f2f0ea] hover:text-[#d9a13a] transition-colors">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="menuIcon">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Navigation -->
+    <div id="mobileMenu" class="hidden md:hidden border-t border-[#222226] bg-[#0c0c0e] px-4 pt-3 pb-5 transition-all">
+      <div class="flex flex-col gap-3 font-medium text-sm text-[#8a8884]">
+        <a href="#home" class="py-2 hover:text-white transition-colors mobile-nav-link">Home</a>
+        <a href="#products" class="py-2 hover:text-white transition-colors mobile-nav-link">Products &amp; Games</a>
+        <a href="#support" class="py-2 hover:text-[#d9a13a] text-white transition-colors mobile-nav-link flex items-center justify-between">
+          <span>Support Messenger</span>
+          <span class="text-xs text-[#d9a13a]">Live</span>
+        </a>
+        <a href="#community" class="py-2 hover:text-white transition-colors mobile-nav-link">Telegram Community</a>
+        <a href="#about" class="py-2 hover:text-white transition-colors mobile-nav-link">About &amp; FAQ</a>
+        <div class="pt-2 border-t border-[#1b1b20] flex items-center justify-between">
+          <span class="text-xs text-[#8a8884]">Staff &amp; Support Ops</span>
+          <a href="admin.html" class="text-xs text-[#d9a13a] font-semibold hover:underline">Admin Dashboard &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Wrap -->
+  <main>
+
+    <!-- =======================================================================
+         SECTION 1: HERO ("Build. Play. Connect.")
+         ======================================================================= -->
+    <section id="home" class="relative pt-12 sm:pt-20 pb-20 md:pb-28 overflow-hidden border-b border-[#18181c]">
+      <!-- Radial Golden Glow Backdrop -->
+      <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-[#d9a13a]/10 rounded-full blur-[140px] pointer-events-none -z-10" aria-hidden="true"></div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          
+          <!-- Hero Copy -->
+          <div class="lg:col-span-7 flex flex-col items-start text-left">
+            
+            <!-- Category / Eyebrow metadata (Zero-pill text separator) -->
+            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#d9a13a] mb-5">
+              <span>Next-Gen Gaming Studio</span>
+              <span class="text-[#8a8884]" aria-hidden="true">·</span>
+              <span class="text-[#8a8884]">Telegram Ecosystem</span>
+              <span class="text-[#8a8884]" aria-hidden="true">·</span>
+              <span class="text-[#f2f0ea]">Est. 2026</span>
+            </div>
+
+            <!-- Primary Headline -->
+            <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.08] mb-6 text-[#f2f0ea]">
+              Build.<br />
+              <span class="gold-gradient-text">Play. Connect.</span>
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-base sm:text-lg text-[#8a8884] max-w-xl mb-9 leading-relaxed font-normal">
+              Pioneering high-stakes multiplayer strategy, collectible sports experiences, and seamless gaming communities directly within Telegram and the modern web.
+            </p>
+
+            <!-- Actions -->
+            <div class="flex flex-wrap items-center gap-4 mb-12">
+              <a href="#products" class="btn-gold">
+                <span>Explore Games</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </a>
+              <a href="#support" class="btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#d9a13a]">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>Support Messenger</span>
+              </a>
+            </div>
+
+            <!-- Key Trust & Telemetry Stats (Single unboxed row) -->
+            <div class="w-full pt-6 border-t border-[#1a1a20] grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+              <div>
+                <div class="font-heading font-bold text-2xl text-[#f2f0ea]">1,650+</div>
+                <div class="text-xs text-[#8a8884] uppercase tracking-wider mt-0.5">Active Players</div>
+              </div>
+              <div>
+                <div class="font-heading font-bold text-2xl text-[#d9a13a]">3,700+</div>
+                <div class="text-xs text-[#8a8884] uppercase tracking-wider mt-0.5">Cards in Circulation</div>
+              </div>
+              <div>
+                <div class="font-heading font-bold text-2xl text-[#f2f0ea]">99.98%</div>
+                <div class="text-xs text-[#8a8884] uppercase tracking-wider mt-0.5">Bot Uptime</div>
+              </div>
+              <div>
+                <div class="font-heading font-bold text-2xl text-[#f3c469]">&lt; 2m</div>
+                <div class="text-xs text-[#8a8884] uppercase tracking-wider mt-0.5">Support SLA</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Hero Visual Media Card -->
+          <div class="lg:col-span-5 relative">
+            <div class="paradox-card relative p-2 overflow-hidden group">
+              <!-- Frame Glow -->
+              <div class="absolute inset-0 bg-gradient-to-tr from-[#d9a13a]/15 via-transparent to-transparent opacity-60 pointer-events-none"></div>
+
+              <div class="relative w-full aspect-[16/10] sm:aspect-[4/3] rounded-xl overflow-hidden bg-[#0c0c0e]">
+                <img 
+                  src="/public/images/paradox_hero_banner_1790216359622.jpg" 
+                  alt="PARADOX Obsidian and Gold Gaming Realm"
+                  class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                  loading="eager"
+                  referrerpolicy="no-referrer"
+                  onerror="this.onerror=null; this.src='/src/assets/images/paradox_hero_banner_1790216359622.jpg';"
+                />
+                
+                <!-- Bottom Scrim for Title -->
+                <div class="absolute inset-0 bg-gradient-to-t from-[#050506] via-[#050506]/30 to-transparent flex flex-col justify-end p-5">
+                  <div class="flex items-center justify-between text-xs text-[#d9a13a] font-semibold uppercase tracking-wider mb-1">
+                    <span>Paradox Ecosystem</span>
+                    <span class="text-white/80">Telegram Cloud</span>
+                  </div>
+                  <h2 class="text-lg font-bold text-[#f2f0ea]">Precision Esports &amp; Strategy</h2>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SECTION 2: SUPPORT MESSENGER (Core Feature)
+         - Sidebar with 5 selectable categories
+         - Interactive chat area
+         - Saves ticket to Firestore collection "tickets"
+         - Opens https://t.me/S_A_D_R_A_14 in a new tab
+         ======================================================================= -->
+    <section id="support" class="py-20 md:py-28 border-b border-[#18181c] relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Section Header -->
+        <div class="text-center max-w-2xl mx-auto mb-14">
+          <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#d9a13a] mb-2">
+            <span>Direct Support Desk</span>
+            <span class="text-[#8a8884]" aria-hidden="true">·</span>
+            <span>Firestore Sync</span>
+            <span class="text-[#8a8884]" aria-hidden="true">·</span>
+            <span>Telegram Verified</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-[#f2f0ea] tracking-tight mb-4">
+            Support Messenger
+          </h2>
+          <p class="text-sm sm:text-base text-[#8a8884] leading-relaxed">
+            Need assistance with game bots, card trades, or your account? Select a category, describe your issue, and dispatch a priority ticket directly to our admin team.
+          </p>
+        </div>
+
+        <!-- Messenger Container: Sidebar + Chat Window -->
+        <div class="paradox-card overflow-hidden grid grid-cols-1 lg:grid-cols-12 max-w-5xl mx-auto shadow-2xl border-[#26262c]">
+          
+          <!-- SIDEBAR: Category Selector (5 Categories) -->
+          <div class="lg:col-span-4 bg-[#0d0d10] border-b lg:border-b-0 lg:border-r border-[#222226] p-5 sm:p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-xs uppercase tracking-wider font-bold text-[#8a8884]">Ticket Categories</span>
+                <span class="text-[11px] text-[#d9a13a] font-medium" id="categoryCountIndicator">5 Available</span>
+              </div>
+              <p class="text-xs text-[#8a8884] mb-4">
+                Choose the department that best fits your inquiry:
+              </p>
+
+              <!-- Category Buttons List -->
+              <div class="flex flex-col gap-2" role="tablist" aria-label="Support Topics">
+                
+                <!-- Category 1 -->
+                <button 
+                  type="button" 
+                  role="tab" 
+                  aria-selected="true" 
+                  class="category-btn active w-full text-left px-3.5 py-3 rounded-lg border border-[#d9a13a] bg-[#18181c] text-[#f2f0ea] transition-all flex items-center justify-between group"
+                  data-category="Football Collect"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#d9a13a] shadow-sm"></span>
+                    <span class="font-medium text-sm">Football Collect</span>
+                  </div>
+                  <span class="text-[11px] text-[#8a8884] group-hover:text-[#d9a13a] transition-colors">Card Bot</span>
+                </button>
+
+                <!-- Category 2 -->
+                <button 
+                  type="button" 
+                  role="tab" 
+                  aria-selected="false" 
+                  class="category-btn w-full text-left px-3.5 py-3 rounded-lg border border-[#222226] bg-[#111113] text-[#8a8884] hover:text-[#f2f0ea] hover:border-[#383842] transition-all flex items-center justify-between group"
+                  data-category="World War"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#555] group-hover:bg-[#d9a13a] transition-colors"></span>
+                    <span class="font-medium text-sm">World War</span>
+                  </div>
+                  <span class="text-[11px] text-[#8a8884] group-hover:text-[#d9a13a] transition-colors">Strategy Bot</span>
+                </button>
+
+                <!-- Category 3 -->
+                <button 
+                  type="button" 
+                  role="tab" 
+                  aria-selected="false" 
+                  class="category-btn w-full text-left px-3.5 py-3 rounded-lg border border-[#222226] bg-[#111113] text-[#8a8884] hover:text-[#f2f0ea] hover:border-[#383842] transition-all flex items-center justify-between group"
+                  data-category="Account"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#555] group-hover:bg-[#d9a13a] transition-colors"></span>
+                    <span class="font-medium text-sm">Account</span>
+                  </div>
+                  <span class="text-[11px] text-[#8a8884] group-hover:text-[#d9a13a] transition-colors">Profile &amp; ID</span>
+                </button>
+
+                <!-- Category 4 -->
+                <button 
+                  type="button" 
+                  role="tab" 
+                  aria-selected="false" 
+                  class="category-btn w-full text-left px-3.5 py-3 rounded-lg border border-[#222226] bg-[#111113] text-[#8a8884] hover:text-[#f2f0ea] hover:border-[#383842] transition-all flex items-center justify-between group"
+                  data-category="Technical Issue"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#555] group-hover:bg-[#d9a13a] transition-colors"></span>
+                    <span class="font-medium text-sm">Technical Issue</span>
+                  </div>
+                  <span class="text-[11px] text-[#8a8884] group-hover:text-[#d9a13a] transition-colors">Bug &amp; Lag</span>
+                </button>
+
+                <!-- Category 5 -->
+                <button 
+                  type="button" 
+                  role="tab" 
+                  aria-selected="false" 
+                  class="category-btn w-full text-left px-3.5 py-3 rounded-lg border border-[#222226] bg-[#111113] text-[#8a8884] hover:text-[#f2f0ea] hover:border-[#383842] transition-all flex items-center justify-between group"
+                  data-category="Other"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#555] group-hover:bg-[#d9a13a] transition-colors"></span>
+                    <span class="font-medium text-sm">Other</span>
+                  </div>
+                  <span class="text-[11px] text-[#8a8884] group-hover:text-[#d9a13a] transition-colors">Inquiry</span>
+                </button>
+
+              </div>
+            </div>
+
+            <!-- Admin Telegram Notice & Status Box -->
+            <div class="mt-6 pt-5 border-t border-[#1d1d23] text-xs">
+              <div class="flex items-center gap-2 text-[#f2f0ea] font-medium mb-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Admin Liaison Live</span>
+              </div>
+              <p class="text-[#8a8884] text-[11px] leading-relaxed mb-2.5">
+                Every ticket auto-generates a Firestore reference and directly routes to <a href="https://t.me/S_A_D_R_A_14" target="_blank" rel="noopener noreferrer" class="text-[#d9a13a] font-semibold hover:underline">@S_A_D_R_A_14</a> on Telegram.
+              </p>
+              <div class="text-[11px] text-[#8a8884]/80 flex items-center gap-1.5 bg-[#141418] p-2 rounded-md border border-[#23232a]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-[#d9a13a] shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Tickets are monitored 24/7</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- CHAT WINDOW (Right Side) -->
+          <div class="lg:col-span-8 bg-[#111113] flex flex-col h-[560px]">
+            
+            <!-- Chat Window Header -->
+            <div class="px-5 py-3.5 border-b border-[#222226] bg-[#141417] flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-[#1e1e24] border border-[#2d2d34] flex items-center justify-center text-xs font-bold text-[#d9a13a]">
+                  PX
+                </div>
+                <div>
+                  <div class="text-sm font-bold text-[#f2f0ea] flex items-center gap-2">
+                    <span id="currentTopicLabel">Football Collect</span>
+                    <span class="text-[10px] text-emerald-400 font-medium px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40">Admin Online</span>
+                  </div>
+                  <div class="text-xs text-[#8a8884]">
+                    Connected to <span class="text-[#d9a13a]">@S_A_D_R_A_14</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick action to open telegram directly -->
+              <a href="https://t.me/S_A_D_R_A_14" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#8a8884] hover:text-[#d9a13a] transition-colors py-1 px-2.5 rounded border border-[#26262e] hover:border-[#d9a13a]/50">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.196 1.006.128.832.942z"/>
+                </svg>
+                <span>Direct PM</span>
+              </a>
+            </div>
+
+            <!-- Message Feed Area -->
+            <div id="chatMessageFeed" class="flex-1 p-5 overflow-y-auto custom-scrollbar flex flex-col gap-4 bg-[#0a0a0c]">
+              
+              <!-- Initial Welcome Bubble from Paradox Support -->
+              <div class="flex items-start gap-3 max-w-[85%]">
+                <div class="w-7 h-7 rounded-full bg-[#1b1b22] border border-[#d9a13a]/30 flex items-center justify-center text-[10px] font-bold text-[#d9a13a] shrink-0 mt-0.5">
+                  P
+                </div>
+                <div class="flex flex-col">
+                  <div class="text-[11px] text-[#8a8884] mb-1 flex items-center gap-2">
+                    <span class="font-medium text-[#f2f0ea]">Paradox Assistant</span>
+                    <span id="initialGreetingTime">Just now</span>
+                  </div>
+                  <div class="bg-[#151518] border border-[#24242b] text-[#f2f0ea] text-xs sm:text-sm p-3.5 rounded-2xl rounded-tl-sm leading-relaxed shadow-sm">
+                    Welcome to <strong>PARADOX Support</strong>. Select your topic from the left sidebar and type your message below. 
+                    <div class="mt-2 text-xs text-[#8a8884]">
+                      When you click <strong>Send</strong>:
+                      <ul class="list-disc pl-4 mt-1 space-y-0.5 text-[#f2f0ea]/90">
+                        <li>Your ticket will be logged in our official Firestore database.</li>
+                        <li>You'll be seamlessly redirected to our Telegram administrator (<span class="text-[#d9a13a]">@S_A_D_R_A_14</span>) for instant response.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dynamic bubbles will be appended here -->
+
+            </div>
+
+            <!-- Message Input Form -->
+            <form id="chatMessageForm" class="p-4 border-t border-[#222226] bg-[#141417]">
+              <!-- Notification Toast inside chat -->
+              <div id="chatStatusNotice" class="hidden mb-3 text-xs py-2 px-3 rounded-lg border transition-all flex items-center justify-between">
+                <span id="chatStatusText">Ticket registered! Connecting to Telegram...</span>
+                <a id="telegramFallbackLink" href="https://t.me/S_A_D_R_A_14" target="_blank" rel="noopener noreferrer" class="underline font-bold text-[#d9a13a] ml-2">Click here</a>
+              </div>
+
+              <div class="flex items-end gap-2.5">
+                <div class="flex-1 relative">
+                  <textarea 
+                    id="chatInput" 
+                    rows="2" 
+                    placeholder="Describe your issue or question... (Press Enter to Send)"
+                    required
+                    class="w-full bg-[#0a0a0c] border border-[#27272f] focus:border-[#d9a13a] text-sm text-[#f2f0ea] rounded-xl px-3.5 py-2.5 resize-none transition-colors outline-none placeholder-[#5d5b58] leading-relaxed custom-scrollbar"
+                  ></textarea>
+                </div>
+                
+                <button 
+                  type="submit" 
+                  id="sendBtn" 
+                  class="btn-gold h-11 px-5 rounded-xl shrink-0 flex items-center justify-center gap-1.5"
+                  title="Send Ticket to Firestore and Telegram"
+                >
+                  <span class="hidden sm:inline">Send</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] text-[#8a8884] mt-2 px-1">
+                <span>Selected Topic: <strong id="selectedTopicFooter" class="text-[#d9a13a]">Football Collect</strong></span>
+                <span>Press <kbd class="px-1.5 py-0.5 rounded bg-[#202028] text-[#f2f0ea] font-mono text-[10px]">Enter</kbd> to submit</span>
+              </div>
+            </form>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SECTION 3: PRODUCTS SECTION
+         Two Flagship Games:
+         1. "Football Collect"
+         2. "World War"
+         ======================================================================= -->
+    <section id="products" class="py-20 md:py-28 border-b border-[#18181c] relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Section Title -->
+        <div class="text-center max-w-2xl mx-auto mb-16">
+          <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#d9a13a] mb-2">
+            <span>Flagship Ecosystem</span>
+            <span class="text-[#8a8884]" aria-hidden="true">·</span>
+            <span>Telegram Native</span>
+            <span class="text-[#8a8884]" aria-hidden="true">·</span>
+            <span>Zero Install</span>
+          </div>
+          <h2 class="text-3xl sm:text-5xl font-extrabold text-[#f2f0ea] tracking-tight mb-4">
+            Our Products
+          </h2>
+          <p class="text-sm sm:text-base text-[#8a8884] leading-relaxed">
+            Built from the ground up for millions of players. Fast-loading, secure, competitive Telegram mini-games powered by cloud state synchronization.
+          </p>
+        </div>
+
+        <!-- Products Grid (2 Cards) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+          
+          <!-- PRODUCT 1: Football Collect -->
+          <article class="paradox-card flex flex-col overflow-hidden group">
+            <!-- Card Image Showcase: Iconic Football Superstar Gold Card -->
+            <div class="relative w-full aspect-[16/10] overflow-hidden bg-[#0c0c0e]">
+              <img 
+                src="/public/images/football_superstar_card_1790217986907.jpg" 
+                alt="Football Superstar Holographic Gold Trading Card"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                onerror="this.onerror=null; this.src='/src/assets/images/football_superstar_card_1790217986907.jpg';"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-[#111113] via-transparent to-transparent"></div>
+              
+              <!-- Bot Badge overlay -->
+              <div class="absolute top-4 right-4 bg-[#050506]/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#2d2d35] text-xs font-semibold text-[#d9a13a] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>@CollectFootballerrsBot</span>
+              </div>
+            </div>
+
+            <!-- Card Content Body -->
+            <div class="p-6 sm:p-8 flex-1 flex flex-col justify-between">
+              <div>
+                <!-- Unboxed metadata -->
+                <div class="flex items-center gap-2 text-xs font-semibold text-[#8a8884] mb-2 uppercase tracking-wider">
+                  <span>Sports Card TCG</span>
+                  <span aria-hidden="true">·</span>
+                  <span>Telegram Mini-App</span>
+                  <span aria-hidden="true">·</span>
+                  <span class="text-[#d9a13a]">Live Bot</span>
+                </div>
+
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-[#f2f0ea] mb-3 group-hover:text-[#f3c469] transition-colors">
+                  Football Collect
+                </h3>
+
+                <p class="text-sm text-[#8a8884] mb-6 leading-relaxed">
+                  The ultimate Telegram football-card-collecting game. Open packs, auction rare gold holographic cards, assemble tactical squads, and compete against friends in real-time PvP league matches.
+                </p>
+
+                <!-- Example Stats (Editable numbers, not hardcoded text) -->
+                <div class="grid grid-cols-3 gap-3 p-4 rounded-xl bg-[#0c0c0e] border border-[#1e1e24] mb-8" id="footballStatsBlock">
+                  <div>
+                    <div class="text-xs text-[#8a8884] mb-0.5">کاربران (Users)</div>
+                    <div class="font-heading font-bold text-lg sm:text-xl text-[#f2f0ea] stat-editable" data-stat="users" id="statFootballUsers">1,600+</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-[#8a8884] mb-0.5">کارت‌ها (Cards)</div>
+                    <div class="font-heading font-bold text-lg sm:text-xl text-[#d9a13a] stat-editable" data-stat="cards" id="statFootballCards">3,700+</div>
+                  </div>
+                  <div>
+                    <div class="text-xs text-[#8a8884] mb-0.5">Daily Packs</div>
+                    <div class="font-heading font-bold text-lg sm:text-xl text-[#f2f0ea] stat-editable" data-stat="matches" id="statFootballMatches">480+</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CTAs -->
+              <div class="flex flex-wrap items-center gap-3 pt-2">
+                <a href="https://t.me/CollectFootballerrsBot" target="_blank" rel="noopener noreferrer" class="btn-gold flex-1 justify-center py-3">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.196 1.006.128.832.942z"/>
+                  </svg>
+                  <span>Play Football Collect</span>
+                </a>
+
+                <a href="https://t.me/S_A_D_R_A_14" target="_blank" rel="noopener noreferrer" class="btn-secondary py-3 px-4">
+                  <span>Get Support</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- PRODUCT 2: World War -->
+          <article class="paradox-card flex flex-col overflow-hidden group">
+            <!-- Card Image Showcase -->
+            <div class="relative w-full aspect-[16/10] overflow-hidden bg-[#0c0c0e]">
+              <img 
+                src="/public/images/world_war_strategy_game_1790216379401.jpg" 
+                alt="World War Strategy MMO Game Battlefield Radar"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                onerror="this.onerror=null; this.src='/src/assets/images/world_war_strategy_game_1790216379401.jpg';"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-[#111113] via-transparent to-transparent"></div>
+
+              <!-- Bot Handle Overlay -->
+              <div class="absolute top-4 right-4 bg-[#050506]/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#2d2d35] text-xs font-semibold text-[#d9a13a] flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>@ParadoxFight_worldbot</span>
+              </div>
+            </div>
+
+            <!-- Card Content Body -->
+            <div class="p-6 sm:p-8 flex-1 flex flex-col justify-between">
+              <div>
+                <!-- Unboxed metadata -->
+                <div class="flex items-center gap-2 text-xs font-semibold text-[#8a8884] mb-2 uppercase tracking-wider">
+                  <span>Grand MMO Strategy</span>
+                  <span aria-hidden="true">·</span>
+                  <span>Tactical Warfare</span>
+                  <span aria-hidden="true">·</span>
+                  <span class="text-[#d9a13a]">Multiplayer Bot</span>
+                </div>
+
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-[#f2f0ea] mb-3 group-hover:text-[#f3c469] transition-colors">
+                  World War
+                </h3>
+
+                <p class="text-sm text-[#8a8884] mb-6 leading-relaxed">
+                  A high-octane multiplayer world-war strategy game. Construct defensive military bases, negotiate treaties, recruit legions, and launch coordinated alliance strikes to dominate the global map.
+                </p>
+
+                <!-- Example Stats (Editable numbers, not hardcoded text) -->
+                <div class="p-4 rounded-xl bg-[#0c0c0e] border border-[#1e1e24] mb-8 flex items-center justify-between" id="worldWarStatsBlock">
+                  <div>
+                    <div class="text-xs text-[#8a8884] mb-0.5">کاربران فعال (Active Users)</div>
+                    <div class="font-heading font-bold text-xl text-[#f2f0ea] stat-editable" data-stat="users" id="statWarUsers">50 Active</div>
+                  </div>
+                  <div class="text-xs text-[#d9a13a] flex items-center gap-1.5 font-semibold bg-[#17171d] px-3 py-1.5 rounded-lg border border-[#2a2a35]">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>Early Access</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CTAs -->
+              <div class="flex flex-wrap items-center gap-3 pt-2">
+                <a href="https://t.me/ParadoxFight_worldbot" target="_blank" rel="noopener noreferrer" class="btn-gold flex-1 justify-center py-3">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.196 1.006.128.832.942z"/>
+                  </svg>
+                  <span>Launch @ParadoxFight_worldbot</span>
+                </a>
+
+                <a href="https://t.me/S_A_D_R_A_14" target="_blank" rel="noopener noreferrer" class="btn-secondary py-3 px-4">
+                  <span>Get Support</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </article>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SECTION 4: COMMUNITY SECTION
+         Cards linking to the Paradox Telegram group: https://t.me/+BY1pCb5BR-5jNDY0
+         ======================================================================= -->
+    <section id="community" class="py-20 md:py-28 border-b border-[#18181c] relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="paradox-card relative overflow-hidden p-8 sm:p-12 lg:p-16 border-[#292932]">
+          <!-- Ambient Gold Glow -->
+          <div class="absolute -right-20 -top-20 w-96 h-96 bg-[#d9a13a]/10 rounded-full blur-[100px] pointer-events-none" aria-hidden="true"></div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+            
+            <div class="lg:col-span-7">
+              <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#d9a13a] mb-3">
+                <span>Verified Telegram Community</span>
+                <span class="text-[#8a8884]" aria-hidden="true">·</span>
+                <span>Active 24/7</span>
+              </div>
+
+              <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#f2f0ea] tracking-tight mb-5 leading-tight">
+                Join the PARADOX<br />Gaming Network
+              </h2>
+
+              <p class="text-sm sm:text-base text-[#8a8884] mb-8 max-w-xl leading-relaxed">
+                Connect with thousands of active tacticians, card collectors, and guild masters. Share deck combinations, negotiate high-value card trades, catch instant patch notes, and claim official tournament prizes.
+              </p>
+
+              <!-- Community Feature List (Clean typographic style) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-9 text-sm text-[#f2f0ea]">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#d9a13a]"></span>
+                  <span>Daily Card Trade Exchange</span>
+                </div>
+                <div class="flex items-center gap-2.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#d9a13a]"></span>
+                  <span>Direct Dev Patch Drops</span>
+                </div>
+                <div class="flex items-center gap-2.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#d9a13a]"></span>
+                  <span>Weekly World War Alliances</span>
+                </div>
+                <div class="flex items-center gap-2.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#d9a13a]"></span>
+                  <span>VIP Tournament Leaderboards</span>
+                </div>
+              </div>
+
+              <!-- Community Primary CTA -->
+              <a href="https://t.me/+BY1pCb5BR-5jNDY0" target="_blank" rel="noopener noreferrer" class="btn-gold py-3.5 px-7 text-sm">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.196 1.006.128.832.942z"/>
+                </svg>
+                <span>Join Official Telegram Group</span>
+              </a>
+            </div>
+
+            <!-- Community Banner Image -->
+            <div class="lg:col-span-5">
+              <div class="rounded-xl overflow-hidden border border-[#2d2d37] shadow-xl aspect-[16/10] bg-[#0c0c0e]">
+                <img 
+                  src="/public/images/paradox_community_banner_1790216390152.jpg" 
+                  alt="Paradox Gaming Community Hub"
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
+                  onerror="this.onerror=null; this.src='/src/assets/images/paradox_community_banner_1790216390152.jpg';"
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         SECTION 5: ABOUT + FAQ SECTION
+         ======================================================================= -->
+    <section id="about" class="py-20 md:py-28 border-b border-[#18181c] relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-14">
+          
+          <!-- About Column -->
+          <div class="lg:col-span-5">
+            <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#d9a13a] mb-3">
+              <span>Studio Philosophy</span>
+              <span class="text-[#8a8884]" aria-hidden="true">·</span>
+              <span>Vision &amp; Standards</span>
+            </div>
+
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-[#f2f0ea] tracking-tight mb-5">
+              Crafted in Darkness.<br />
+              Accented in Gold.
+            </h2>
+
+            <p class="text-sm sm:text-base text-[#8a8884] leading-relaxed mb-6">
+              <strong>PARADOX</strong> is an independent gaming studio dedicated to building high-fidelity experiences that live right where players already chat. By fusing dark, minimalist aesthetics with rapid Telegram cloud backends, we eliminate loading friction and empower competitive communities.
+            </p>
+
+            <p class="text-sm sm:text-base text-[#8a8884] leading-relaxed mb-8">
+              We uphold zero-tolerance fair-play guarantees, instant automated card verification, and a player-first support philosophy backed by round-the-clock Telegram moderation.
+            </p>
+
+            <div class="p-4 rounded-xl bg-[#111113] border border-[#222226] text-xs text-[#8a8884]">
+              <div class="text-[#f2f0ea] font-semibold mb-1">Direct Inquiries &amp; Partnerships</div>
+              <div>Contact Lead Admin: <a href="https://t.me/S_A_D_R_A_14" target="_blank" rel="noopener noreferrer" class="text-[#d9a13a] hover:underline font-medium">@S_A_D_R_A_14</a></div>
+            </div>
+          </div>
+
+          <!-- FAQ Accordion Column -->
+          <div class="lg:col-span-7">
+            <div class="mb-6">
+              <span class="text-xs uppercase tracking-wider font-bold text-[#8a8884]">Frequently Asked Questions</span>
+              <h3 class="text-2xl font-bold text-[#f2f0ea] mt-1">Everything You Need to Know</h3>
+            </div>
+
+            <div class="flex flex-col gap-3.5" id="faqAccordion">
+              
+              <!-- FAQ Item 1 -->
+              <div class="paradox-card p-5 cursor-pointer faq-item" aria-expanded="false">
+                <button type="button" class="w-full flex items-center justify-between text-left text-sm sm:text-base font-bold text-[#f2f0ea] gap-4 bg-transparent border-0 cursor-pointer">
+                  <span>How do I play Football Collect on Telegram?</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="faq-chevron transition-transform duration-300 text-[#8a8884] shrink-0">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div class="faq-content text-xs sm:text-sm text-[#8a8884] pt-2 leading-relaxed">
+                  Simply open Telegram and launch <a href="https://t.me/CollectFootballerrsBot" target="_blank" rel="noopener noreferrer" class="text-[#d9a13a] hover:underline">@CollectFootballerrsBot</a>. You'll receive starter card packs immediately, unlock daily claims, and be able to trade cards with other verified players right in your chat.
+                </div>
+              </div>
+
+              <!-- FAQ Item 2 -->
+              <div class="paradox-card p-5 cursor-pointer faq-item" aria-expanded="false">
+                <button type="button" class="w-full flex items-center justify-between text-left text-sm sm:text-base font-bold text-[#f2f0ea] gap-4 bg-transparent border-0 cursor-pointer">
+                  <span>What makes World War MMO unique?</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="faq-chevron transition-transform duration-300 text-[#8a8884] shrink-0">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div class="faq-content text-xs sm:text-sm text-[#8a8884] pt-2 leading-relaxed">
+                  World War (<a href="https://t.me/ParadoxFight_worldbot" target="_blank" rel="noopener noreferrer" class="text-[#d9a13a] hover:underline">@ParadoxFight_worldbot</a>) runs a persistent global tactical map inside Telegram. Alliances plan real-time assaults, manage supply depots, and coordinate military campaigns without cumbersome app store downloads.
+                </div>
+              </div>
+
+              <!-- FAQ Item 3 -->
+              <div class="paradox-card p-5 cursor-pointer faq-item" aria-expanded="false">
+                <button type="button" class="w-full flex items-center justify-between text-left text-sm sm:text-base font-bold text-[#f2f0ea] gap-4 bg-transparent border-0 cursor-pointer">
+                  <span>How does ticket submission and response work?</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="faq-chevron transition-transform duration-300 text-[#8a8884] shrink-0">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div class="faq-content text-xs sm:text-sm text-[#8a8884] pt-2 leading-relaxed">
+                  When you submit a message in the Support Messenger section, it is permanently logged as an "Open" ticket in our Firestore database. Simultaneously, our system opens a private chat with administrator <a href="https://t.me/S_A_D_R_A_14" target="_blank" rel="noopener noreferrer" class="text-[#d9a13a] hover:underline">@S_A_D_R_A_14</a> so you can receive an instant one-on-one resolution.
+                </div>
+              </div>
+
+              <!-- FAQ Item 4 -->
+              <div class="paradox-card p-5 cursor-pointer faq-item" aria-expanded="false">
+                <button type="button" class="w-full flex items-center justify-between text-left text-sm sm:text-base font-bold text-[#f2f0ea] gap-4 bg-transparent border-0 cursor-pointer">
+                  <span>Can I access the private Admin Dashboard?</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="faq-chevron transition-transform duration-300 text-[#8a8884] shrink-0">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                <div class="faq-content text-xs sm:text-sm text-[#8a8884] pt-2 leading-relaxed">
+                  The <a href="admin.html" class="text-[#d9a13a] hover:underline">Admin Dashboard</a> is reserved for authorized staff with Firebase Authentication credentials. It features live Firestore ticket tracking, status filters, and real-time document resolution.
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =======================================================================
+       FOOTER
+       ======================================================================= -->
+  <footer class="bg-[#08080a] border-t border-[#1c1c20] pt-14 pb-20 text-xs text-[#8a8884]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-[#18181c]">
+        
+        <!-- Brand column -->
+        <div class="md:col-span-5">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="font-heading font-extrabold text-xl tracking-wider text-[#f2f0ea]">
+              PARADOX<span class="text-[#d9a13a]">.</span>
+            </span>
+          </div>
+          <p class="max-w-sm text-xs leading-relaxed mb-4">
+            Next-generation Telegram gaming ecosystem. Dark, minimal, and premium experiences engineered for instant global play.
+          </p>
+          <div class="text-[11px] text-[#8a8884]/70">
+            Powered by Firebase Cloud Firestore &amp; Telegram API
+          </div>
+        </div>
+
+        <!-- Links column: Products -->
+        <div class="md:col-span-3">
+          <div class="font-heading font-bold text-xs uppercase tracking-wider text-[#f2f0ea] mb-3">Games &amp; Bots</div>
+          <ul class="space-y-2">
+            <li><a href="https://t.me/CollectFootballerrsBot" target="_blank" rel="noopener noreferrer" class="hover:text-[#d9a13a] transition-colors">Football Collect Bot</a></li>
+            <li><a href="https://t.me/ParadoxFight_worldbot" target="_blank" rel="noopener noreferrer" class="hover:text-[#d9a13a] transition-colors">World War Strategy Bot</a></li>
+            <li><a href="https://t.me/+BY1pCb5BR-5jNDY0" target="_blank" rel="noopener noreferrer" class="hover:text-[#d9a13a] transition-colors">Community Channel</a></li>
+          </ul>
+        </div>
+
+        <!-- Links column: Support & Staff -->
+        <div class="md:col-span-4">
+          <div class="font-heading font-bold text-xs uppercase tracking-wider text-[#f2f0ea] mb-3">Support &amp; Operations</div>
+          <ul class="space-y-2">
+            <li><a href="#support" class="hover:text-[#d9a13a] transition-colors">Support Ticket Messenger</a></li>
+            <li><a href="https://t.me/S_A_D_R_A_14" target="_blank" rel="noopener noreferrer" class="hover:text-[#d9a13a] transition-colors">Admin Telegram (@S_A_D_R_A_14)</a></li>
+            <li><a href="admin.html" class="text-[#d9a13a] hover:underline font-semibold flex items-center gap-1.5 mt-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span>Staff Admin Portal</span>
+            </a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
+        <div>&copy; 2026 PARADOX Gaming Studio. All rights reserved.</div>
+        <div class="flex items-center gap-5">
+          <a href="#home" class="hover:text-white transition-colors">Back to Top &uarr;</a>
+          <span>·</span>
+          <a href="admin.html" class="hover:text-[#d9a13a] transition-colors">Admin Login</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =======================================================================
+       FLOATING SUPPORT BUTTON (Bottom-Right, All Pages)
+       Links to https://t.me/S_A_D_R_A_14
+       ======================================================================= -->
+  <a 
+    href="https://t.me/S_A_D_R_A_14" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    class="floating-support-btn" 
+    aria-label="Direct Telegram Support with @S_A_D_R_A_14"
+    id="floatingSupportBtn"
+  >
+    <span class="text-base" aria-hidden="true">💬</span>
+    <span>Support</span>
+  </a>
+
+  <!-- =======================================================================
+       TAWK.TO LIVE CHAT WIDGET SCRIPT EMBED
+       Standard embed.tawk.to snippet with placeholder Property ID / Widget ID
+       ======================================================================= -->
+  <!--Start of Tawk.to Script-->
+  <script type="text/javascript">
+    /* ==========================================================================
+       TAWK.TO LIVE CHAT WIDGET CONFIGURATION
+       Replace YOUR_PROPERTY_ID and YOUR_WIDGET_ID with your actual Tawk.to keys.
+       Example: https://embed.tawk.to/64abcdef123456/1h123456
+       ========================================================================== */
+    var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+    (function(){
+      var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+      s1.async = true;
+      s1.src = 'https://embed.tawk.to/YOUR_PROPERTY_ID/YOUR_WIDGET_ID';
+      s1.charset = 'UTF-8';
+      s1.setAttribute('crossorigin', '*');
+      s0.parentNode.insertBefore(s1, s0);
+    })();
+  </script>
+  <!--End of Tawk.to Script-->
+
+  <!-- =======================================================================
+       JAVASCRIPT: FIREBASE CONFIG + CHAT + INTERACTIONS
+       ======================================================================= -->
+  <script>
+    /* ==========================================================================
+       FIREBASE CONFIGURATION
+       Paste your real Firebase project credentials below.
+       Find these in: Firebase Console -> Project Settings -> General -> Your apps -> Web app
+       ========================================================================== */
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase if valid config is provided
+    let db = null;
+    let isFirebaseReady = false;
+
+    try {
+      const isPlaceholder = !firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY" || firebaseConfig.apiKey.includes("YOUR_");
+      if (!isPlaceholder && typeof firebase !== 'undefined') {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.firestore();
+        isFirebaseReady = true;
+        console.log("PARADOX: Firebase Firestore initialized successfully.");
+      } else {
+        console.info("PARADOX: Firebase placeholder detected. Local demo fallback mode active.");
+      }
+    } catch (err) {
+      console.warn("PARADOX: Firebase init error. Local storage fallback will be used:", err);
+    }
+
+    // Helper: Local fallback ticket storage to ensure instant testing across index.html and admin.html
+    const LOCAL_TICKETS_KEY = 'paradox_tickets_storage';
+    function saveTicketToLocalStorage(ticket) {
+      try {
+        const existing = JSON.parse(localStorage.getItem(LOCAL_TICKETS_KEY) || '[]');
+        existing.unshift(ticket);
+        localStorage.setItem(LOCAL_TICKETS_KEY, JSON.stringify(existing));
+      } catch (e) {
+        console.error("Local storage save error", e);
+      }
+    }
+
+    // State
+    let selectedCategory = "Football Collect";
+
+    // DOM Elements
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    const currentTopicLabel = document.getElementById('currentTopicLabel');
+    const selectedTopicFooter = document.getElementById('selectedTopicFooter');
+    const chatInput = document.getElementById('chatInput');
+    const chatForm = document.getElementById('chatMessageForm');
+    const chatFeed = document.getElementById('chatMessageFeed');
+    const statusNotice = document.getElementById('chatStatusNotice');
+    const statusText = document.getElementById('chatStatusText');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const initialGreetingTime = document.getElementById('initialGreetingTime');
+
+    if (initialGreetingTime) {
+      initialGreetingTime.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Mobile Menu Toggle
+    if (mobileMenuBtn && mobileMenu) {
+      mobileMenuBtn.addEventListener('click', () => {
+        const isHidden = mobileMenu.classList.contains('hidden');
+        if (isHidden) {
+          mobileMenu.classList.remove('hidden');
+          mobileMenuBtn.setAttribute('aria-expanded', 'true');
+        } else {
+          mobileMenu.classList.add('hidden');
+          mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+          mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
+
+    // Category Selector
+    categoryButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        categoryButtons.forEach(b => {
+          b.classList.remove('active', 'border-[#d9a13a]', 'bg-[#18181c]', 'text-[#f2f0ea]');
+          b.classList.add('border-[#222226]', 'bg-[#111113]', 'text-[#8a8884]');
+          b.setAttribute('aria-selected', 'false');
+          const dot = b.querySelector('span:first-child');
+          if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-[#555] group-hover:bg-[#d9a13a] transition-colors';
+        });
+
+        btn.classList.add('active', 'border-[#d9a13a]', 'bg-[#18181c]', 'text-[#f2f0ea]');
+        btn.classList.remove('border-[#222226]', 'bg-[#111113]', 'text-[#8a8884]');
+        btn.setAttribute('aria-selected', 'true');
+        const activeDot = btn.querySelector('span:first-child');
+        if (activeDot) activeDot.className = 'w-2.5 h-2.5 rounded-full bg-[#d9a13a] shadow-sm';
+
+        selectedCategory = btn.getAttribute('data-category');
+        if (currentTopicLabel) currentTopicLabel.textContent = selectedCategory;
+        if (selectedTopicFooter) selectedTopicFooter.textContent = selectedCategory;
+
+        // Focus chat input for rapid UX
+        chatInput.focus();
+      });
+    });
+
+    // Enter key submits (Shift+Enter for newline)
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatForm.requestSubmit();
+      }
+    });
+
+    // Chat Message Submission Handler
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const messageText = chatInput.value.trim();
+      if (!messageText) return;
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const ticketId = 'px-' + Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+
+      // 1. Render message bubble in chat UI
+      const userBubbleWrap = document.createElement('div');
+      userBubbleWrap.className = 'flex items-start justify-end gap-3 max-w-[85%] ml-auto chat-bubble-animate';
+      userBubbleWrap.innerHTML = `
+        <div class="flex flex-col items-end">
+          <div class="text-[11px] text-[#8a8884] mb-1 flex items-center gap-2">
+            <span>${timeStr}</span>
+            <span class="font-medium text-[#d9a13a]">You (${escapeHtml(selectedCategory)})</span>
+          </div>
+          <div class="bg-[#d9a13a] text-[#050506] font-medium text-xs sm:text-sm p-3.5 rounded-2xl rounded-tr-sm leading-relaxed shadow-md">
+            ${escapeHtml(messageText)}
+          </div>
+          <div class="text-[10px] text-[#8a8884] mt-1 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>Ticket Saved · Status: Open</span>
+          </div>
+        </div>
+        <div class="w-7 h-7 rounded-full bg-[#d9a13a] text-[#050506] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+          U
+        </div>
+      `;
+      chatFeed.appendChild(userBubbleWrap);
+      chatFeed.scrollTop = chatFeed.scrollHeight;
+
+      // Clear input
+      chatInput.value = '';
+
+      // Ticket Document Model
+      const ticketDoc = {
+        id: ticketId,
+        topic: selectedCategory,
+        message: messageText,
+        status: "Open",
+        createdAt: isFirebaseReady ? firebase.firestore.FieldValue.serverTimestamp() : now.toISOString(),
+        clientTimestamp: now.toISOString(),
+        userTelegramRedirect: "https://t.me/S_A_D_R_A_14"
+      };
+
+      // 2. Save ticket document to Firestore
+      if (isFirebaseReady && db) {
+        db.collection("tickets").add(ticketDoc)
+          .then((docRef) => {
+            console.log("PARADOX: Ticket saved to Firestore with ID:", docRef.id);
+          })
+          .catch((err) => {
+            console.error("PARADOX: Firestore write error:", err);
+            // Fallback to local storage so admin.html still works
+            saveTicketToLocalStorage({ ...ticketDoc, createdAt: now.toISOString() });
+          });
+      } else {
+        // Fallback local storage persistence
+        saveTicketToLocalStorage({ ...ticketDoc, createdAt: now.toISOString() });
+      }
+
+      // 3. Open a new browser tab to admin Telegram
+      const telegramUrl = "https://t.me/S_A_D_R_A_14";
+      const newTab = window.open(telegramUrl, "_blank");
+
+      // Show in-UI confirmation status & fallback link if popup was blocked
+      if (statusNotice && statusText) {
+        statusNotice.className = 'mb-3 text-xs py-2.5 px-3.5 rounded-lg border border-[#d9a13a]/30 bg-[#d9a13a]/10 text-[#f2f0ea] flex items-center justify-between';
+        statusText.innerHTML = `✓ Ticket logged for <strong>${escapeHtml(selectedCategory)}</strong>! Opening Telegram...`;
+        statusNotice.classList.remove('hidden');
+
+        setTimeout(() => {
+          statusNotice.classList.add('hidden');
+        }, 8000);
+      }
+    });
+
+    // FAQ Accordion logic
+    document.querySelectorAll('.faq-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const isExpanded = item.getAttribute('aria-expanded') === 'true';
+        document.querySelectorAll('.faq-item').forEach(other => {
+          other.setAttribute('aria-expanded', 'false');
+        });
+        if (!isExpanded) {
+          item.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+
+    // Helper: Escape HTML
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, function(m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[m];
+      });
+    }
+  </script>
+
+</body>
+</html>

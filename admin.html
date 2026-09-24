@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PARADOX — Admin Portal | Support Ticket Moderation</title>
+  <meta name="description" content="Private administration dashboard for PARADOX gaming ecosystem. Real-time Firestore support ticket triage, status management, and player moderation." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Google Fonts: Sora (Headings) & Manrope (Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN for pure static hosting without build step -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paradoxBg: '#050506',
+            paradoxCard: '#111113',
+            paradoxCardAlt: '#151517',
+            paradoxGold: '#d9a13a',
+            paradoxGoldLight: '#f3c469',
+            paradoxText: '#f2f0ea',
+            paradoxMuted: '#8a8884'
+          },
+          fontFamily: {
+            heading: ['Sora', 'sans-serif'],
+            body: ['Manrope', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Firebase JS SDK (Compat version for pure static hosting without build step) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #050506;
+      --bg-card: #111113;
+      --bg-card-alt: #151517;
+      --border-subtle: #222226;
+      --border-gold: rgba(217, 161, 58, 0.28);
+      --gold: #d9a13a;
+      --gold-light: #f3c469;
+      --text-main: #f2f0ea;
+      --text-muted: #8a8884;
+      --font-heading: 'Sora', sans-serif;
+      --font-body: 'Manrope', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4, h5, h6, .font-heading {
+      font-family: var(--font-heading);
+      letter-spacing: -0.02em;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    .bg-grid-pattern {
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .btn-gold {
+      background-color: var(--gold);
+      color: #050506;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.875rem;
+      padding: 0.7rem 1.4rem;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: 1px solid var(--gold);
+      cursor: pointer;
+    }
+    .btn-gold:hover {
+      background-color: var(--gold-light);
+      border-color: var(--gold-light);
+      box-shadow: 0 0 18px rgba(217, 161, 58, 0.35);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.65rem 1.25rem;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-secondary:hover {
+      border-color: var(--border-gold);
+      color: var(--gold-light);
+    }
+
+    .paradox-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    /* Filter buttons */
+    .filter-btn {
+      background-color: #111113;
+      border: 1px solid #222226;
+      color: #8a8884;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+    .filter-btn:hover {
+      color: #f2f0ea;
+      border-color: #383842;
+    }
+    .filter-btn.active {
+      background-color: #1a1a20;
+      border-color: var(--gold);
+      color: #f2f0ea;
+      box-shadow: 0 2px 8px rgba(217, 161, 58, 0.15);
+    }
+    .filter-btn.active .filter-count {
+      background-color: var(--gold);
+      color: #050506;
+    }
+    .filter-count {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.45rem;
+      border-radius: 9999px;
+      background-color: #202028;
+      color: #8a8884;
+      font-family: var(--font-heading);
+    }
+
+    /* Floating support button */
+    .floating-support-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+      color: #050506;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.875rem;
+      padding: 0.85rem 1.35rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(217, 161, 58, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .floating-support-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(217, 161, 58, 0.5);
+    }
+
+    /* Status badge styles */
+    .status-badge-open {
+      color: #60a5fa;
+      background-color: rgba(96, 165, 250, 0.12);
+      border: 1px solid rgba(96, 165, 250, 0.25);
+    }
+    .status-badge-waiting {
+      color: #facc15;
+      background-color: rgba(250, 204, 21, 0.12);
+      border: 1px solid rgba(250, 204, 21, 0.25);
+    }
+    .status-badge-progress {
+      color: #c084fc;
+      background-color: rgba(192, 132, 252, 0.12);
+      border: 1px solid rgba(192, 132, 252, 0.25);
+    }
+    .status-badge-closed {
+      color: #9ca3af;
+      background-color: rgba(156, 163, 175, 0.12);
+      border: 1px solid rgba(156, 163, 175, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-grid-pattern">
+
+  <!-- =======================================================================
+       ADMIN TOP BAR
+       ======================================================================= -->
+  <header class="sticky top-0 z-50 w-full border-b border-[#222226] bg-[#050506]/95 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4 py-3">
+      
+      <!-- Brand & Admin Indicator -->
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-2.5 text-decoration-none group">
+          <div class="w-8 h-8 rounded-lg bg-[#111113] border border-[#2d2d33] flex items-center justify-center text-gold group-hover:border-[#d9a13a] transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="text-[#d9a13a]">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
+          <span class="font-heading font-extrabold text-lg tracking-wider text-[#f2f0ea]">
+            PARADOX <span class="text-[#d9a13a] text-xs font-semibold px-2 py-0.5 rounded bg-[#18181f] border border-[#282833] ml-1">ADMIN</span>
+          </span>
+        </a>
+      </div>
+
+      <!-- Navigation & Actions -->
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#8a8884] hover:text-[#f2f0ea] transition-colors px-3 py-1.5 rounded border border-[#24242c] hover:border-[#33333e]">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span>Public Website</span>
+        </a>
+
+        <!-- Auth state dependent area -->
+        <div id="authActionsContainer" class="flex items-center gap-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- =======================================================================
+       MAIN CONTENT: LOGIN SCREEN OR DASHBOARD
+       ======================================================================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+
+    <!-- VIEW 1: AUTHENTICATION LOGIN CARD -->
+    <div id="loginSection" class="max-w-md mx-auto my-8">
+      <div class="paradox-card p-7 sm:p-9 shadow-2xl border-[#2a2a34]">
+        
+        <div class="text-center mb-8">
+          <div class="w-12 h-12 rounded-xl bg-[#17171c] border border-[#d9a13a]/30 flex items-center justify-center text-[#d9a13a] mx-auto mb-3.5 shadow-md">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h1 class="text-2xl font-extrabold text-[#f2f0ea] tracking-tight">Admin Sign In</h1>
+          <p class="text-xs text-[#8a8884] mt-1.5">Enter Firebase credentials to triage player tickets in real-time.</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="adminLoginForm" class="flex flex-col gap-4">
+          <!-- Official Admin Credentials Banner -->
+          <div class="p-3 rounded-lg bg-[#141419] border border-[#d9a13a]/30 text-xs flex flex-col gap-1 text-[#f2f0ea]">
+            <div class="flex items-center justify-between text-[#d9a13a] font-bold text-[11px] uppercase tracking-wider">
+              <span>Admin Credentials</span>
+              <span class="text-emerald-400 font-normal">Active</span>
+            </div>
+            <div class="flex items-center justify-between text-xs text-[#8a8884] font-mono mt-0.5">
+              <span>User: <strong class="text-[#f2f0ea]">sadramaldini</strong></span>
+              <span>Pass: <strong class="text-[#f2f0ea]">sadgoat</strong></span>
+            </div>
+          </div>
+
+          <div>
+            <label for="loginUsername" class="block text-xs font-semibold text-[#8a8884] mb-1.5">Username / Email (نام کاربری)</label>
+            <input 
+              type="text" 
+              id="loginUsername" 
+              required 
+              value="sadramaldini"
+              placeholder="sadramaldini"
+              class="w-full bg-[#0a0a0c] border border-[#27272f] focus:border-[#d9a13a] text-sm text-[#f2f0ea] rounded-lg px-3.5 py-2.5 outline-none transition-colors"
+            />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="loginPassword" class="text-xs font-semibold text-[#8a8884]">Password (رمز عبور)</label>
+              <button type="button" id="togglePasswordVisibilityBtn" class="text-[11px] text-[#d9a13a] hover:underline bg-transparent border-0 cursor-pointer">نمایش رمز</button>
+            </div>
+            <input 
+              type="password" 
+              id="loginPassword" 
+              required 
+              value="sadgoat"
+              placeholder="••••••••"
+              class="w-full bg-[#0a0a0c] border border-[#27272f] focus:border-[#d9a13a] text-sm text-[#f2f0ea] rounded-lg px-3.5 py-2.5 outline-none transition-colors"
+            />
+          </div>
+
+          <!-- Auth Status Alert Box -->
+          <div id="loginAlert" class="hidden text-xs p-3 rounded-lg border"></div>
+
+          <button type="submit" id="loginSubmitBtn" class="btn-gold w-full py-3 mt-1 justify-center">
+            <span>Sign In as Admin (ورود ادمین)</span>
+          </button>
+        </form>
+
+        <!-- Quick Access Helper -->
+        <div class="mt-6 pt-5 border-t border-[#1d1d23] text-center">
+          <button 
+            type="button" 
+            id="demoLoginBtn" 
+            class="w-full py-2.5 px-3 rounded-lg bg-[#15151a] hover:bg-[#1c1c22] border border-[#2d2d38] text-xs font-medium text-[#d9a13a] transition-all flex items-center justify-center gap-1.5"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <span>ورود سریع با اکانت sadramaldini</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- VIEW 2: AUTHENTICATED ADMIN DASHBOARD -->
+    <div id="dashboardSection" class="hidden">
+      
+      <!-- Top Metrics Overview -->
+      <div class="mb-10">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-[#f2f0ea] tracking-tight">Support Tickets</h1>
+            <p class="text-xs sm:text-sm text-[#8a8884] mt-1">Real-time Firestore stream ordered by creation timestamp.</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <!-- Live Indicator -->
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#111114] border border-[#25252c] text-xs text-[#8a8884]">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="syncModeIndicator">Live Firestore Sync</span>
+            </div>
+
+            <!-- Refresh Button -->
+            <button id="refreshTicketsBtn" title="Refresh Ticket Feed" class="p-2 rounded-lg bg-[#111114] border border-[#25252c] text-[#8a8884] hover:text-[#d9a13a] transition-colors">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+          <div class="paradox-card p-4">
+            <div class="text-[11px] uppercase tracking-wider font-semibold text-[#8a8884]">Total</div>
+            <div class="text-2xl font-bold font-heading text-[#f2f0ea] mt-1" id="metricTotal">0</div>
+          </div>
+          <div class="paradox-card p-4">
+            <div class="text-[11px] uppercase tracking-wider font-semibold text-[#60a5fa]">Open</div>
+            <div class="text-2xl font-bold font-heading text-[#60a5fa] mt-1" id="metricOpen">0</div>
+          </div>
+          <div class="paradox-card p-4">
+            <div class="text-[11px] uppercase tracking-wider font-semibold text-[#facc15]">Waiting</div>
+            <div class="text-2xl font-bold font-heading text-[#facc15] mt-1" id="metricWaiting">0</div>
+          </div>
+          <div class="paradox-card p-4">
+            <div class="text-[11px] uppercase tracking-wider font-semibold text-[#c084fc]">In Progress</div>
+            <div class="text-2xl font-bold font-heading text-[#c084fc] mt-1" id="metricProgress">0</div>
+          </div>
+          <div class="paradox-card p-4 col-span-2 sm:col-span-1">
+            <div class="text-[11px] uppercase tracking-wider font-semibold text-[#9ca3af]">Closed</div>
+            <div class="text-2xl font-bold font-heading text-[#9ca3af] mt-1" id="metricClosed">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Bar & Search Controls -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+        
+        <!-- Filter Tabs (All / Open / Waiting for User / In Progress / Closed) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" role="tablist" aria-label="Status Filters" id="statusFilterTabs">
+          <button type="button" class="filter-btn active" data-status="all">
+            <span>All</span>
+            <span class="filter-count" id="countAll">0</span>
+          </button>
+          <button type="button" class="filter-btn" data-status="Open">
+            <span>Open</span>
+            <span class="filter-count" id="countOpen">0</span>
+          </button>
+          <button type="button" class="filter-btn" data-status="Waiting for User">
+            <span>Waiting for User</span>
+            <span class="filter-count" id="countWaiting">0</span>
+          </button>
+          <button type="button" class="filter-btn" data-status="In Progress">
+            <span>In Progress</span>
+            <span class="filter-count" id="countProgress">0</span>
+          </button>
+          <button type="button" class="filter-btn" data-status="Closed">
+            <span>Closed</span>
+            <span class="filter-count" id="countClosed">0</span>
+          </button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative w-full sm:w-64">
+          <input 
+            type="text" 
+            id="ticketSearchInput" 
+            placeholder="Search tickets or topics..."
+            class="w-full bg-[#111113] border border-[#222226] focus:border-[#d9a13a] text-xs text-[#f2f0ea] rounded-lg pl-8 pr-3 py-2 outline-none transition-colors"
+          />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8a8884] pointer-events-none">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+
+      </div>
+
+      <!-- Ticket Stream List Container -->
+      <div id="ticketStreamContainer" class="flex flex-col gap-4">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Empty State View -->
+      <div id="emptyTicketsView" class="hidden paradox-card p-12 text-center border-dashed border-[#2b2b35]">
+        <div class="w-12 h-12 rounded-full bg-[#181820] text-[#8a8884] flex items-center justify-center mx-auto mb-3">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="text-base font-bold text-[#f2f0ea]" id="emptyStateTitle">No Tickets Found</div>
+        <p class="text-xs text-[#8a8884] max-w-sm mx-auto mt-1" id="emptyStateDesc">
+          There are currently no tickets matching this filter status. New tickets sent from the public website will appear here in real-time.
+        </p>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- =======================================================================
+       FLOATING SUPPORT BUTTON (Bottom-Right, All Pages)
+       ======================================================================= -->
+  <a 
+    href="https://t.me/S_A_D_R_A_14" 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    class="floating-support-btn" 
+    aria-label="Direct Telegram Support with @S_A_D_R_A_14"
+  >
+    <span class="text-base" aria-hidden="true">💬</span>
+    <span>Support</span>
+  </a>
+
+  <!-- =======================================================================
+       TAWK.TO LIVE CHAT WIDGET SCRIPT EMBED
+       ======================================================================= -->
+  <!--Start of Tawk.to Script-->
+  <script type="text/javascript">
+    var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+    (function(){
+      var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+      s1.async = true;
+      /* Replace with your real Tawk.to Property ID and Widget ID: */
+      s1.src = 'https://embed.tawk.to/YOUR_PROPERTY_ID/YOUR_WIDGET_ID';
+      s1.charset = 'UTF-8';
+      s1.setAttribute('crossorigin', '*');
+      s0.parentNode.insertBefore(s1, s0);
+    })();
+  </script>
+  <!--End of Tawk.to Script-->
+
+  <!-- =======================================================================
+       JAVASCRIPT: FIREBASE AUTH & FIRESTORE REAL-TIME TICKET DASHBOARD
+       ======================================================================= -->
+  <script>
+    /* ==========================================================================
+       FIREBASE CONFIGURATION
+       Paste your real Firebase project credentials below.
+       Same config as index.html so both share the same project and database.
+       ========================================================================== */
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Firebase Initialization & Detection
+    let auth = null;
+    let db = null;
+    let isFirebaseReady = false;
+    let isDemoMode = false;
+    let currentUser = null;
+    let rawTickets = [];
+    let activeFilter = 'all';
+    let searchQuery = '';
+    let unsubscribeFirestore = null;
+
+    const LOCAL_TICKETS_KEY = 'paradox_tickets_storage';
+    const DEMO_USER_KEY = 'paradox_admin_demo_session';
+
+    try {
+      const isPlaceholder = !firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY" || firebaseConfig.apiKey.includes("YOUR_");
+      if (!isPlaceholder && typeof firebase !== 'undefined') {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        auth = firebase.auth();
+        db = firebase.firestore();
+        isFirebaseReady = true;
+        console.log("PARADOX Admin: Real Firebase initialized.");
+      } else {
+        console.info("PARADOX Admin: Placeholder config. Demo mode ready.");
+      }
+    } catch (err) {
+      console.warn("PARADOX Admin: Firebase initialization error, falling back to local demo:", err);
+    }
+
+    // DOM Elements
+    const loginSection = document.getElementById('loginSection');
+    const dashboardSection = document.getElementById('dashboardSection');
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    const loginUsernameInput = document.getElementById('loginUsername');
+    const loginPasswordInput = document.getElementById('loginPassword');
+    const togglePasswordVisibilityBtn = document.getElementById('togglePasswordVisibilityBtn');
+    const loginAlert = document.getElementById('loginAlert');
+    const demoLoginBtn = document.getElementById('demoLoginBtn');
+    const authActionsContainer = document.getElementById('authActionsContainer');
+    const syncModeIndicator = document.getElementById('syncModeIndicator');
+    const refreshTicketsBtn = document.getElementById('refreshTicketsBtn');
+    const ticketStreamContainer = document.getElementById('ticketStreamContainer');
+    const emptyTicketsView = document.getElementById('emptyTicketsView');
+    const ticketSearchInput = document.getElementById('ticketSearchInput');
+    const statusFilterTabs = document.getElementById('statusFilterTabs');
+
+    // Toggle Password Visibility
+    if (togglePasswordVisibilityBtn && loginPasswordInput) {
+      togglePasswordVisibilityBtn.addEventListener('click', () => {
+        if (loginPasswordInput.type === 'password') {
+          loginPasswordInput.type = 'text';
+          togglePasswordVisibilityBtn.textContent = 'مخفی کردن';
+        } else {
+          loginPasswordInput.type = 'password';
+          togglePasswordVisibilityBtn.textContent = 'نمایش رمز';
+        }
+      });
+    }
+
+    // Metrics elements
+    const metricTotal = document.getElementById('metricTotal');
+    const metricOpen = document.getElementById('metricOpen');
+    const metricWaiting = document.getElementById('metricWaiting');
+    const metricProgress = document.getElementById('metricProgress');
+    const metricClosed = document.getElementById('metricClosed');
+    const countAll = document.getElementById('countAll');
+    const countOpen = document.getElementById('countOpen');
+    const countWaiting = document.getElementById('countWaiting');
+    const countProgress = document.getElementById('countProgress');
+    const countClosed = document.getElementById('countClosed');
+
+    // Initialize Auth Listener
+    function initAuth() {
+      // Check stored session first
+      const storedSession = localStorage.getItem(DEMO_USER_KEY);
+      if (storedSession) {
+        currentUser = { email: storedSession };
+        isDemoMode = !isFirebaseReady || storedSession === 'sadramaldini';
+        showDashboard(storedSession);
+        return;
+      }
+
+      if (isFirebaseReady && auth) {
+        auth.onAuthStateChanged(user => {
+          if (user) {
+            currentUser = user;
+            isDemoMode = false;
+            showDashboard(user.email || 'sadramaldini');
+          } else {
+            showLogin();
+          }
+        });
+      } else {
+        showLogin();
+      }
+    }
+
+    // Show Login Screen
+    function showLogin() {
+      loginSection.classList.remove('hidden');
+      dashboardSection.classList.add('hidden');
+      authActionsContainer.innerHTML = '';
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+        unsubscribeFirestore = null;
+      }
+    }
+
+    // Show Dashboard
+    function showDashboard(userEmail) {
+      loginSection.classList.add('hidden');
+      dashboardSection.classList.remove('hidden');
+
+      if (syncModeIndicator) {
+        syncModeIndicator.textContent = isDemoMode ? 'Verified Admin: @S_A_D_R_A_14' : 'Live Firestore Sync';
+      }
+
+      // Render User badge + Sign Out button in header
+      authActionsContainer.innerHTML = `
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 text-xs text-[#8a8884] bg-[#111114] px-2.5 py-1.5 rounded-lg border border-[#23232a]">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span class="text-[#d9a13a] font-bold">@S_A_D_R_A_14</span>
+            <span class="text-[#8a8884] hidden sm:inline">(${escapeHtml(userEmail)})</span>
+          </div>
+          <button 
+            type="button" 
+            id="signOutBtn" 
+            class="px-3 py-1.5 rounded-lg bg-[#141418] hover:bg-[#202028] text-xs font-semibold text-[#f2f0ea] hover:text-[#d9a13a] border border-[#25252e] transition-colors flex items-center gap-1.5"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span>خروج (Sign Out)</span>
+          </button>
+        </div>
+      `;
+
+      document.getElementById('signOutBtn').addEventListener('click', handleSignOut);
+
+      // Start listening to tickets
+      startTicketsSubscription();
+    }
+
+    // Sign In Handler with User: sadramaldini / Password: sadgoat
+    adminLoginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = loginUsernameInput.value.trim();
+      const password = loginPasswordInput.value.trim();
+
+      if (!username || !password) return;
+
+      setLoginAlert('', false);
+
+      // Check official credentials requested by the user
+      const isOfficialAdmin = (username.toLowerCase() === 'sadramaldini' || username.toLowerCase() === 'sadramaldini@paradox.gg') && password === 'sadgoat';
+
+      if (isOfficialAdmin) {
+        // Authenticate successfully
+        const adminIdentity = 'sadramaldini';
+        localStorage.setItem(DEMO_USER_KEY, adminIdentity);
+        isDemoMode = true;
+        currentUser = { email: adminIdentity };
+
+        // If real Firebase is available, also attempt silent email sign-in if configured
+        if (isFirebaseReady && auth) {
+          auth.signInWithEmailAndPassword('sadramaldini@paradox.gg', password).catch(() => {});
+        }
+
+        setLoginAlert('خوش آمدید! در حال انتقال به پنل...', false);
+        setTimeout(() => {
+          showDashboard(adminIdentity);
+        }, 300);
+        return;
+      }
+
+      // If Firebase Auth is live and user supplied another valid Firebase email/pass
+      if (isFirebaseReady && auth && username.includes('@')) {
+        try {
+          await auth.signInWithEmailAndPassword(username, password);
+        } catch (err) {
+          console.error("Firebase Auth Error:", err);
+          setLoginAlert("نام کاربری یا رمز عبور نادرست است. از یوزر sadramaldini و رمز sadgoat استفاده کنید.", true);
+        }
+      } else {
+        // Invalid credentials
+        setLoginAlert("اطلاعات ورود اشتباه است! نام کاربری: sadramaldini | رمز عبور: sadgoat", true);
+      }
+    });
+
+    // One-Click Quick Admin Login button
+    demoLoginBtn.addEventListener('click', () => {
+      loginUsernameInput.value = 'sadramaldini';
+      loginPasswordInput.value = 'sadgoat';
+      const adminIdentity = 'sadramaldini';
+      localStorage.setItem(DEMO_USER_KEY, adminIdentity);
+      isDemoMode = true;
+      currentUser = { email: adminIdentity };
+      setLoginAlert('ورود تایید شد! در حال انتقال به پنل مدیریت...', false);
+      setTimeout(() => {
+        showDashboard(adminIdentity);
+      }, 250);
+    });
+
+    // Sign Out
+    async function handleSignOut() {
+      localStorage.removeItem(DEMO_USER_KEY);
+      if (isFirebaseReady && auth) {
+        try {
+          await auth.signOut();
+        } catch (err) {
+          console.error("Sign out error", err);
+        }
+      }
+      currentUser = null;
+      showLogin();
+    }
+
+    function setLoginAlert(msg, isError) {
+      if (!msg) {
+        loginAlert.className = 'hidden';
+        loginAlert.textContent = '';
+        return;
+      }
+      loginAlert.className = isError 
+        ? 'text-xs p-3 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-200' 
+        : 'text-xs p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-200';
+      loginAlert.textContent = msg;
+    }
+
+    // Real-Time Tickets Subscription
+    function startTicketsSubscription() {
+      if (isFirebaseReady && db && !isDemoMode) {
+        // Subscribe to Firestore collection 'tickets' ordered by createdAt desc
+        try {
+          unsubscribeFirestore = db.collection("tickets")
+            .orderBy("createdAt", "desc")
+            .onSnapshot((snapshot) => {
+              rawTickets = [];
+              snapshot.forEach(doc => {
+                const data = doc.data();
+                rawTickets.push({
+                  docId: doc.id,
+                  isFirestore: true,
+                  ...data
+                });
+              });
+
+              // If Firestore is empty, merge any local demo tickets so client sees sample data
+              if (rawTickets.length === 0) {
+                const localOnes = getLocalTickets();
+                if (localOnes.length > 0) {
+                  rawTickets = localOnes;
+                } else {
+                  seedSampleTicketsIfEmpty();
+                }
+              }
+
+              updateMetricsAndRender();
+            }, (error) => {
+              console.warn("Firestore snapshot error (check security rules or index), using local fallback:", error);
+              fallbackToLocalTickets();
+            });
+        } catch (err) {
+          console.warn("Error attaching firestore snapshot:", err);
+          fallbackToLocalTickets();
+        }
+      } else {
+        fallbackToLocalTickets();
+      }
+    }
+
+    function fallbackToLocalTickets() {
+      let tickets = getLocalTickets();
+      if (!tickets || tickets.length === 0) {
+        seedSampleTicketsIfEmpty();
+        tickets = getLocalTickets();
+      }
+      rawTickets = tickets;
+      updateMetricsAndRender();
+    }
+
+    function getLocalTickets() {
+      try {
+        return JSON.parse(localStorage.getItem(LOCAL_TICKETS_KEY) || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveLocalTickets(tickets) {
+      try {
+        localStorage.setItem(LOCAL_TICKETS_KEY, JSON.stringify(tickets));
+      } catch (e) {}
+    }
+
+    // Seed sample tickets if empty for immediate rich preview
+    function seedSampleTicketsIfEmpty() {
+      const existing = getLocalTickets();
+      if (existing.length > 0) return;
+
+      const samples = [
+        {
+          id: 'px-demo1',
+          docId: 'px-demo1',
+          topic: 'Football Collect',
+          message: 'I purchased the Champions League Gold Pack via TON Stars but my rare Haaland holographic card has not shown up in my inventory.',
+          status: 'Open',
+          createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+          isFirestore: false
+        },
+        {
+          id: 'px-demo2',
+          docId: 'px-demo2',
+          topic: 'World War',
+          message: 'Our alliance #BlackViper captured Sector 44 on the tactical map, but the resource yield distribution failed to credit our commander.',
+          status: 'In Progress',
+          createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+          isFirestore: false
+        },
+        {
+          id: 'px-demo3',
+          docId: 'px-demo3',
+          topic: 'Account',
+          message: 'Requesting account merge between my two Telegram usernames @alex_esports and @alex_paradox.',
+          status: 'Waiting for User',
+          createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+          isFirestore: false
+        },
+        {
+          id: 'px-demo4',
+          docId: 'px-demo4',
+          topic: 'Technical Issue',
+          message: 'The Telegram bot inline keyboard was intermittently unresponsive during the 19:00 UTC server raid reset.',
+          status: 'Closed',
+          createdAt: new Date(Date.now() - 1000 * 60 * 600).toISOString(),
+          isFirestore: false
+        }
+      ];
+
+      saveLocalTickets(samples);
+      rawTickets = samples;
+    }
+
+    // Update Metrics and Re-render Cards
+    function updateMetricsAndRender() {
+      // Sort descending by date
+      rawTickets.sort((a, b) => {
+        const timeA = parseTicketDate(a).getTime();
+        const timeB = parseTicketDate(b).getTime();
+        return timeB - timeA;
+      });
+
+      // Compute status counts
+      const counts = {
+        all: rawTickets.length,
+        Open: 0,
+        'Waiting for User': 0,
+        'In Progress': 0,
+        Closed: 0
+      };
+
+      rawTickets.forEach(t => {
+        const s = t.status || 'Open';
+        if (counts[s] !== undefined) {
+          counts[s]++;
+        }
+      });
+
+      // Update counters in UI
+      if (metricTotal) metricTotal.textContent = counts.all;
+      if (metricOpen) metricOpen.textContent = counts.Open;
+      if (metricWaiting) metricWaiting.textContent = counts['Waiting for User'];
+      if (metricProgress) metricProgress.textContent = counts['In Progress'];
+      if (metricClosed) metricClosed.textContent = counts.Closed;
+
+      if (countAll) countAll.textContent = counts.all;
+      if (countOpen) countOpen.textContent = counts.Open;
+      if (countWaiting) countWaiting.textContent = counts['Waiting for User'];
+      if (countProgress) countProgress.textContent = counts['In Progress'];
+      if (countClosed) countClosed.textContent = counts.Closed;
+
+      // Filter and render list
+      renderFilteredTickets();
+    }
+
+    // Render Filtered Tickets
+    function renderFilteredTickets() {
+      const q = searchQuery.toLowerCase().trim();
+
+      const filtered = rawTickets.filter(ticket => {
+        // Status filter
+        if (activeFilter !== 'all' && (ticket.status || 'Open') !== activeFilter) {
+          return false;
+        }
+
+        // Search query filter
+        if (q) {
+          const matchTopic = (ticket.topic || '').toLowerCase().includes(q);
+          const matchMsg = (ticket.message || '').toLowerCase().includes(q);
+          const matchId = (ticket.id || ticket.docId || '').toLowerCase().includes(q);
+          if (!matchTopic && !matchMsg && !matchId) return false;
+        }
+
+        return true;
+      });
+
+      ticketStreamContainer.innerHTML = '';
+
+      if (filtered.length === 0) {
+        emptyTicketsView.classList.remove('hidden');
+        return;
+      }
+
+      emptyTicketsView.classList.add('hidden');
+
+      filtered.forEach(ticket => {
+        const card = createTicketCard(ticket);
+        ticketStreamContainer.appendChild(card);
+      });
+    }
+
+    // Create Ticket Card DOM Element
+    function createTicketCard(ticket) {
+      const currentStatus = ticket.status || 'Open';
+      const parsedDate = parseTicketDate(ticket);
+      const timeFormatted = parsedDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + parsedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const relativeTime = getRelativeTimeString(parsedDate);
+      const docKey = ticket.docId || ticket.id;
+
+      const card = document.createElement('article');
+      card.className = 'paradox-card p-5 sm:p-6 flex flex-col gap-4 border-[#25252e] hover:border-[#383844] transition-all';
+      card.id = 'ticket-card-' + docKey;
+
+      card.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1c1c22] pb-3.5">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="text-xs font-bold text-[#d9a13a] font-heading">${escapeHtml(ticket.topic || 'General')}</span>
+            <span class="text-[#8a8884] text-xs">·</span>
+            <span class="text-xs text-[#8a8884]">${timeFormatted} (${relativeTime})</span>
+            <span class="text-[#8a8884] text-xs">·</span>
+            <span class="text-[10px] text-[#8a8884]/70 font-mono">ID: ${escapeHtml(docKey.substring(0, 10))}</span>
+          </div>
+
+          <!-- Status Dropdown (Immediately updates Firestore on change) -->
+          <div class="flex items-center gap-2">
+            <label for="status-select-${docKey}" class="text-[11px] text-[#8a8884] font-medium hidden sm:inline">Status:</label>
+            <div class="relative inline-flex items-center">
+              <select 
+                id="status-select-${docKey}" 
+                data-doc-id="${docKey}"
+                class="status-dropdown text-xs font-semibold py-1.5 pl-3 pr-8 rounded-lg bg-[#0e0e11] border border-[#2b2b35] focus:border-[#d9a13a] text-[#f2f0ea] outline-none cursor-pointer transition-colors"
+              >
+                <option value="Open" ${currentStatus === 'Open' ? 'selected' : ''}>Open</option>
+                <option value="Waiting for User" ${currentStatus === 'Waiting for User' ? 'selected' : ''}>Waiting for User</option>
+                <option value="In Progress" ${currentStatus === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option value="Closed" ${currentStatus === 'Closed' ? 'selected' : ''}>Closed</option>
+              </select>
+              <div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8a8884]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+            </div>
+            <span class="update-indicator text-[11px] text-emerald-400 opacity-0 transition-opacity ml-1" id="saved-badge-${docKey}">Saved ✓</span>
+          </div>
+        </div>
+
+        <!-- Ticket Message Body -->
+        <div class="text-sm text-[#f2f0ea] leading-relaxed whitespace-pre-wrap bg-[#0c0c0e] p-3.5 rounded-lg border border-[#1b1b22]">
+          ${escapeHtml(ticket.message || 'No message content.')}
+        </div>
+
+        <!-- Ticket Footer Quick Actions -->
+        <div class="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
+          <div class="flex items-center gap-2">
+            <a 
+              href="https://t.me/S_A_D_R_A_14" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#181820] hover:bg-[#20202a] text-[#f2f0ea] hover:text-[#d9a13a] border border-[#262630] transition-colors"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.196 1.006.128.832.942z"/>
+              </svg>
+              <span>Reply on Telegram (@S_A_D_R_A_14)</span>
+            </a>
+
+            <button 
+              type="button" 
+              class="copy-btn px-2.5 py-1.5 rounded-md bg-[#131317] hover:bg-[#1a1a20] text-[#8a8884] hover:text-[#f2f0ea] border border-[#222228] transition-colors flex items-center gap-1"
+              data-text="${escapeHtml(ticket.message || '')}"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              class="delete-btn text-[11px] text-rose-400/80 hover:text-rose-400 hover:underline px-2 py-1 transition-colors"
+              data-doc-id="${docKey}"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Status dropdown change event -> Updates Firestore document immediately
+      const selectElem = card.querySelector('.status-dropdown');
+      selectElem.addEventListener('change', async (e) => {
+        const newStatus = e.target.value;
+        const savedBadge = document.getElementById('saved-badge-' + docKey);
+        
+        // Update in memory
+        ticket.status = newStatus;
+
+        // If connected to Firestore, update live doc
+        if (isFirebaseReady && db && ticket.isFirestore) {
+          try {
+            await db.collection("tickets").doc(docKey).update({
+              status: newStatus,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log("PARADOX Admin: Firestore ticket status updated to:", newStatus);
+          } catch (err) {
+            console.error("Firestore update error:", err);
+          }
+        }
+
+        // Always update in local storage backup
+        const localList = getLocalTickets();
+        const found = localList.find(t => (t.docId || t.id) === docKey);
+        if (found) {
+          found.status = newStatus;
+          saveLocalTickets(localList);
+        }
+
+        // Show "Saved ✓" animation
+        if (savedBadge) {
+          savedBadge.style.opacity = '1';
+          setTimeout(() => {
+            savedBadge.style.opacity = '0';
+          }, 2000);
+        }
+
+        // Recompute metric numbers
+        updateMetricsAndRender();
+      });
+
+      // Copy text button
+      const copyBtn = card.querySelector('.copy-btn');
+      copyBtn.addEventListener('click', () => {
+        const textToCopy = copyBtn.getAttribute('data-text');
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const span = copyBtn.querySelector('span');
+          span.textContent = 'Copied!';
+          setTimeout(() => { span.textContent = 'Copy'; }, 1800);
+        });
+      });
+
+      // Delete ticket button
+      const deleteBtn = card.querySelector('.delete-btn');
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to delete this ticket?')) return;
+
+        if (isFirebaseReady && db && ticket.isFirestore) {
+          try {
+            await db.collection("tickets").doc(docKey).delete();
+          } catch (err) {
+            console.error("Error deleting from firestore", err);
+          }
+        }
+
+        // Remove from memory and local storage
+        rawTickets = rawTickets.filter(t => (t.docId || t.id) !== docKey);
+        const localList = getLocalTickets().filter(t => (t.docId || t.id) !== docKey);
+        saveLocalTickets(localList);
+
+        updateMetricsAndRender();
+      });
+
+      return card;
+    }
+
+    // Filter Buttons Event Listeners
+    statusFilterTabs.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        statusFilterTabs.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.getAttribute('data-status');
+        renderFilteredTickets();
+      });
+    });
+
+    // Search Input Event Listener
+    ticketSearchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderFilteredTickets();
+    });
+
+    // Refresh Button Event Listener
+    refreshTicketsBtn.addEventListener('click', () => {
+      if (isFirebaseReady && db && !isDemoMode) {
+        startTicketsSubscription();
+      } else {
+        fallbackToLocalTickets();
+      }
+      refreshTicketsBtn.classList.add('rotate-180');
+      setTimeout(() => refreshTicketsBtn.classList.remove('rotate-180'), 400);
+    });
+
+    // Helper: Parse Date from Firestore Timestamp or String
+    function parseTicketDate(ticket) {
+      if (!ticket) return new Date();
+      if (ticket.createdAt && typeof ticket.createdAt.toDate === 'function') {
+        return ticket.createdAt.toDate();
+      }
+      if (ticket.createdAt && typeof ticket.createdAt === 'string') {
+        const d = new Date(ticket.createdAt);
+        if (!isNaN(d.getTime())) return d;
+      }
+      if (ticket.clientTimestamp) {
+        const d = new Date(ticket.clientTimestamp);
+        if (!isNaN(d.getTime())) return d;
+      }
+      return new Date();
+    }
+
+    // Helper: Relative time string
+    function getRelativeTimeString(date) {
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffSec = Math.floor(diffMs / 1000);
+      const diffMin = Math.floor(diffSec / 60);
+      const diffHr = Math.floor(diffMin / 60);
+      const diffDay = Math.floor(diffHr / 24);
+
+      if (diffSec < 45) return 'just now';
+      if (diffMin < 60) return `${diffMin}m ago`;
+      if (diffHr < 24) return `${diffHr}h ago`;
+      if (diffDay === 1) return 'yesterday';
+      return `${diffDay}d ago`;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        }[m];
+      });
+    }
+
+    // Run auth check on load
+    initAuth();
+  </script>
+
+</body>
+</html>

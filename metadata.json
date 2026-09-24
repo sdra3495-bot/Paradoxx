@@ -1,0 +1,6 @@
+{
+  "name": "PARADOX — Gaming Brand & Telegram Games Ecosystem",
+  "description": "Official gaming portal for PARADOX, home to Telegram sensations Football Collect and World War MMO, live support ticketing, and admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
